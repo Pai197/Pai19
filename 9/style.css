@@ -1,0 +1,44 @@
+body {
+    background-color: #120b21;
+    height: 100vh;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.box {
+    width: 500px;
+    height: 500px;
+    border-radius: 20px;
+    background-color: #1b1930;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 5rem;
+    font-weight: bold;
+    color: transparent;
+    -webkit-background-clip: text;
+    background-clip: text;
+    animation: autoRotate 2s linear infinite;
+}
+
+@property --angle {
+    syntax: "<angle>";
+    inherits: true;
+    initial-value: 0deg;
+}
+
+.box {
+    --angle: 0deg;
+    background-image: conic-gradient(
+        from var(--angle), #ea2dd8, #001bf1, #ea2dd8
+    );
+}
+
+@keyframes autoRotate {
+    to {
+        --angle: 360deg;
+    }
+}
