@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PG3D Clan Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080c12;--surface:#0e1520;--card:#121c2a;--border:#1c2d42;
+  --gold:#f0a500;--gold2:#ffcc55;--teal:#00c2a8;--red:#ff4560;
+  --green:#00e396;--blue:#008ffb;--purple:#775dd0;--discord:#7289da;
+  --text:#cddaf0;--muted:#516070;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;font-size:15px;min-height:100vh}
+
+/* HEADER */
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100}
+.logo{font-size:19px;font-weight:700;letter-spacing:1px;color:var(--gold);display:flex;align-items:center;gap:8px}
+.logo span{color:var(--text)}
+.hdr-right{display:flex;align-items:center;gap:12px;font-size:12px;font-family:'Share Tech Mono',monospace}
+#cycle-badge{background:rgba(240,165,0,.12);border:1px solid rgba(240,165,0,.3);color:var(--gold);padding:3px 9px;border-radius:4px}
+#cycle-timer{color:var(--gold);font-weight:700}
+.hdr-settings{background:none;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:4px;cursor:pointer;font-size:13px;font-family:'Rajdhani',sans-serif;transition:.2s}
+.hdr-settings:hover{color:var(--text);border-color:var(--muted)}
+
+/* NAV */
+nav{background:var(--surface);border-bottom:1px solid var(--border);display:flex;padding:0 20px}
+.tab{padding:12px 18px;cursor:pointer;font-size:13px;font-weight:700;color:var(--muted);border-bottom:2px solid transparent;transition:.15s;letter-spacing:.6px;text-transform:uppercase;white-space:nowrap}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+
+main{padding:20px;max-width:1300px;margin:0 auto}
+.page{display:none}.page.active{display:block}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:22px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:16px 18px;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--ac,var(--gold))}
+.stat-label{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:6px}
+.stat-value{font-size:28px;font-weight:700;color:var(--ac,var(--gold));font-family:'Share Tech Mono',monospace;line-height:1}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:3px}
+
+/* SECTION HEADER */
+.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:10px;flex-wrap:wrap}
+.stitle{font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:1px;display:flex;align-items:center;gap:7px;white-space:nowrap}
+.stitle::before{content:'';display:block;width:3px;height:15px;background:var(--gold);border-radius:2px}
+
+/* TABLE */
+.tw{background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden;overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:500px}
+th{background:var(--surface);padding:9px 13px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:10px 13px;border-bottom:1px solid rgba(28,45,66,.5);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.012)}
+.pname{font-weight:600;color:var(--text)}
+.pid{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);margin-top:1px}
+.dtag{font-size:12px;color:var(--discord)}
+.vnum{font-family:'Share Tech Mono',monospace;font-weight:700;font-size:14px}
+
+/* BADGES */
+.bdg{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:4px;font-size:12px;font-weight:600}
+.g{background:rgba(0,227,150,.1);color:var(--green);border:1px solid rgba(0,227,150,.2)}
+.r{background:rgba(255,69,96,.1);color:var(--red);border:1px solid rgba(255,69,96,.2)}
+.gd{background:rgba(240,165,0,.1);color:var(--gold);border:1px solid rgba(240,165,0,.2)}
+.mu{background:rgba(81,96,112,.15);color:var(--muted);border:1px solid rgba(81,96,112,.2)}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:5px;border:none;cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;letter-spacing:.4px;transition:.15s;white-space:nowrap}
+.bp{background:var(--gold);color:#000}.bp:hover{background:var(--gold2)}
+.bg{background:transparent;color:var(--muted);border:1px solid var(--border)}.bg:hover{color:var(--text);border-color:var(--muted)}
+.bd{background:rgba(255,69,96,.1);color:var(--red);border:1px solid rgba(255,69,96,.22)}.bd:hover{background:rgba(255,69,96,.2)}
+.bt{background:rgba(0,194,168,.1);color:var(--teal);border:1px solid rgba(0,194,168,.22)}.bt:hover{background:rgba(0,194,168,.2)}
+.bpu{background:rgba(119,93,208,.1);color:var(--purple);border:1px solid rgba(119,93,208,.22)}.bpu:hover{background:rgba(119,93,208,.2)}
+.btn-sm{padding:5px 11px;font-size:12px}
+.btn-xs{padding:3px 7px;font-size:11px}
+
+/* INCOME INPUT BAR */
+.income-bar{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.ib-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);white-space:nowrap}
+.valor-input{background:var(--surface);border:2px solid var(--border);border-radius:5px;padding:8px 14px;color:var(--gold);font-family:'Share Tech Mono',monospace;font-size:20px;font-weight:700;width:170px;outline:none;transition:border-color .2s;-moz-appearance:textfield}
+.valor-input::-webkit-inner-spin-button,.valor-input::-webkit-outer-spin-button{-webkit-appearance:none}
+.valor-input:focus{border-color:var(--gold)}
+.valor-input::placeholder{color:var(--muted);font-size:14px;font-weight:400;font-family:'Rajdhani',sans-serif}
+
+/* ADD-INCOME button per row */
+.add-btn{display:inline-flex;align-items:center;gap:4px;padding:5px 11px;border:none;border-radius:4px;background:rgba(0,227,150,.1);color:var(--green);border:1px solid rgba(0,227,150,.2);cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;transition:.15s}
+.add-btn:hover{background:rgba(0,227,150,.2)}
+.add-btn:disabled{opacity:.4;cursor:not-allowed}
+.undo-btn{display:inline-flex;align-items:center;gap:3px;padding:4px 8px;border:1px solid rgba(255,69,96,.2);background:rgba(255,69,96,.08);color:var(--red);border-radius:4px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;transition:.15s}
+.undo-btn:hover{background:rgba(255,69,96,.18)}
+
+/* CHECK BUTTON */
+.ck-btn{width:30px;height:30px;border-radius:6px;border:2px solid var(--border);background:transparent;cursor:pointer;font-size:15px;color:transparent;transition:.15s;flex-shrink:0}
+.ck-btn::after{content:'✓'}
+.ck-btn:hover{border-color:var(--green);color:rgba(0,227,150,.4)}
+.ck-btn.on{background:rgba(0,227,150,.15);border-color:var(--green);color:var(--green)}
+
+/* VALOR BAR */
+.vbar-wrap{background:var(--surface);border-radius:3px;height:4px;margin-top:3px;min-width:70px}
+.vbar{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--teal),var(--gold));transition:width .35s}
+
+/* SORT BUTTONS */
+.sort-btn{padding:4px 11px;border-radius:4px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;transition:.15s;letter-spacing:.4px}
+.sort-btn.on{background:rgba(240,165,0,.1);color:var(--gold);border-color:rgba(240,165,0,.35)}
+
+/* DONE ROW */
+tr.done-row td{opacity:.4}
+
+/* SEARCH */
+.si{background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:6px 11px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:13px;outline:none;transition:border-color .2s}
+.si:focus{border-color:var(--gold)}
+
+/* MODAL */
+.mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:300;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.mo.open{display:flex}
+.md{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:26px;width:430px;max-width:95vw;animation:sli .2s ease}
+@keyframes sli{from{transform:translateY(-16px);opacity:0}to{transform:translateY(0);opacity:1}}
+.md-title{font-size:16px;font-weight:700;margin-bottom:18px;color:var(--gold);text-transform:uppercase;letter-spacing:1px}
+.fg{margin-bottom:14px}
+.fl{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:5px}
+.fi{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:8px 11px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:14px;outline:none;transition:border-color .2s}
+.fi:focus{border-color:var(--gold)}
+.fa{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
+
+/* RESET BUTTON */
+.reset-btn{background:rgba(255,69,96,.08);color:var(--red);border:1px solid rgba(255,69,96,.25);padding:6px 14px;border-radius:5px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;letter-spacing:.5px;transition:.15s;text-transform:uppercase}
+.reset-btn:hover{background:rgba(255,69,96,.18)}
+
+/* DIVIDER */
+hr{border:none;border-top:1px solid var(--border);margin:20px 0}
+
+/* TOAST */
+#toast{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:7px;pointer-events:none}
+.ti{background:var(--card);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:5px;padding:9px 14px;font-size:13px;font-weight:600;animation:ti .18s ease}
+.ti.e{border-left-color:var(--red)}
+@keyframes ti{from{transform:translateX(16px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+.empty{text-align:center;padding:36px 20px;color:var(--muted)}
+.empty .ic{font-size:32px;margin-bottom:8px}
+
+/* Settings grid */
+.settings-grid{display:grid;gap:16px}
+.settings-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 16px;background:var(--surface);border:1px solid var(--border);border-radius:6px;flex-wrap:wrap}
+.settings-label{font-size:13px;font-weight:600;color:var(--text)}
+.settings-sub{font-size:12px;color:var(--muted);margin-top:2px}
+
+@media(max-width:640px){
+  .stats-grid{grid-template-columns:1fr 1fr}
+  main{padding:12px}
+  .income-bar{gap:8px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">⚔️ PG3D <span>Clan Tracker</span></div>
+  <div class="hdr-right">
+    <span id="cycle-badge">—</span>
+    <span>Reset: <span id="cycle-timer">—</span></span>
+    <button class="hdr-settings" onclick="openModal('mo-settings')">⚙ Settings</button>
+  </div>
+</header>
+
+<nav>
+  <div class="tab active" data-pg="dashboard">📊 Dashboard</div>
+  <div class="tab" data-pg="income">💰 Income</div>
+  <div class="tab" data-pg="members">👥 Members</div>
+</nav>
+
+<main>
+
+<!-- ═══════════ DASHBOARD ═══════════ -->
+<div class="page active" id="page-dashboard">
+
+  <div class="stats-grid">
+    <div class="stat-card" style="--ac:var(--teal)">
+      <div class="stat-label">Members</div>
+      <div class="stat-value" id="d-total">—</div>
+    </div>
+    <div class="stat-card" style="--ac:var(--green)">
+      <div class="stat-label">Collected This Cycle</div>
+      <div class="stat-value" id="d-coll">—</div>
+      <div class="stat-sub" id="d-coll-sub"></div>
+    </div>
+    <div class="stat-card" style="--ac:var(--red)">
+      <div class="stat-label">Missing This Cycle</div>
+      <div class="stat-value" id="d-miss">—</div>
+    </div>
+    <div class="stat-card" style="--ac:var(--gold)">
+      <div class="stat-label">Total War Valor</div>
+      <div class="stat-value" id="d-valor">—</div>
+      <div class="stat-sub" id="d-week"></div>
+    </div>
+  </div>
+
+    <!-- Valor Board -->
+  <div class="sh">
+    <div class="stitle">🏆 Valor Board</div>
+    <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap">
+      <button class="sort-btn on" id="sb-valor" onclick="setSort('valor')">⚡ Valor</button>
+      <button class="sort-btn"   id="sb-name"  onclick="setSort('name')">🔤 Name</button>
+      <input class="si" id="vb-q" placeholder="Search…" oninput="renderVB()" style="width:150px">
+    </div>
+  </div>
+  <p style="font-size:12px;color:var(--muted);margin-bottom:10px">
+    Press ✓ once a player finishes their tasks — they'll sink to the bottom.
+  </p>
+  <div class="tw">
+    <table>
+      <thead><tr><th>#</th><th>Player</th><th>Discord</th><th>Total Valor</th><th>Done</th></tr></thead>
+      <tbody id="vb-tbody"><tr><td colspan="5"><div class="empty"><p>Loading…</p></div></td></tr></tbody>
+    </table>
+  </div>
+</div>
+ <hr>
+  <!-- Who missed income this cycle -->
+  <div class="sh">
+    <div class="stitle">⚠️ Not Collected This Cycle</div>
+    <button class="btn bg btn-sm" onclick="loadDashboard()">🔄 Refresh</button>
+  </div>
+  <div class="tw" id="miss-wrap"><div class="empty"><p>Loading…</p></div></div>
+
+ 
+
+
+
+<!-- ═══════════ INCOME ═══════════ -->
+<div class="page" id="page-income">
+
+  <div class="income-bar">
+    <span class="ib-label">💰 Valor Amount:</span>
+    <input class="valor-input" type="number" id="valor-amt" placeholder="e.g. 500" min="1">
+    <span style="font-size:12px;color:var(--muted)">Type the amount then click <strong style="color:var(--green)">+ Add</strong> next to a player</span>
+    <div style="margin-left:auto;display:flex;gap:7px;align-items:center">
+      <input class="si" id="inc-q" placeholder="Search…" oninput="renderIncome()" style="width:140px">
+      <button class="btn bg btn-sm" onclick="loadIncome()">🔄</button>
+    </div>
+  </div>
+
+  <div class="tw">
+    <table>
+      <thead>
+        <tr>
+          <th>Player</th><th>Player ID</th><th>Discord</th>
+          <th>This Cycle</th><th>War Total</th><th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="inc-tbody"><tr><td colspan="6"><div class="empty"><p>Loading…</p></div></td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════ MEMBERS ═══════════ -->
+<div class="page" id="page-members">
+  <div class="sh">
+    <div class="stitle">👥 Members</div>
+    <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap">
+      <input class="si" id="mem-q" placeholder="Search…" oninput="renderMembers()" style="width:150px">
+      <button class="btn bg btn-sm" onclick="loadMembers()">🔄</button>
+      <button class="btn bp btn-sm" onclick="openAddModal()">+ Add</button>
+      <button class="reset-btn" onclick="openModal('mo-reset')">🗑 Reset War</button>
+    </div>
+  </div>
+
+  <div class="tw">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th><th>Player Name</th><th>Player ID</th><th>Discord</th>
+          <th>Total Valor</th><th>Manual Bonus</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="mem-tbody"><tr><td colspan="7"><div class="empty"><p>Loading…</p></div></td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+</main>
+
+<!-- ══ MEMBER MODAL ══ -->
+<div class="mo" id="mo-member">
+  <div class="md">
+    <div class="md-title" id="mo-mem-title">Add Member</div>
+    <input type="hidden" id="eid">
+    <div class="fg"><label class="fl">Player Name *</label><input class="fi" id="fn" placeholder="e.g. Ashley^^"></div>
+    <div class="fg"><label class="fl">Player ID *</label><input class="fi" id="fp" placeholder="e.g. 214934741"></div>
+    <div class="fg"><label class="fl">Discord Username</label><input class="fi" id="fd" placeholder="e.g. ashleypl.1"></div>
+    <div class="fa">
+      <button class="btn bg" onclick="closeModal('mo-member')">Cancel</button>
+      <button class="btn bp" onclick="saveMember()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ VALOR EDIT MODAL ══ -->
+<div class="mo" id="mo-valor">
+  <div class="md">
+    <div class="md-title">⚡ Edit Manual Valor</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.5">
+      Adjust manual valor bonus for <strong id="ve-name" style="color:var(--text)"></strong>.<br>
+      This is added on top of income entries. Use it to correct missed logs.
+    </p>
+    <input type="hidden" id="ve-id">
+    <div class="fg">
+      <label class="fl">Manual Valor Bonus</label>
+      <input class="fi" type="number" id="ve-val" min="0" style="font-family:'Share Tech Mono',monospace;font-size:20px;color:var(--gold)">
+    </div>
+    <div class="fa">
+      <button class="btn bg" onclick="closeModal('mo-valor')">Cancel</button>
+      <button class="btn bp" onclick="saveValor()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SETTINGS MODAL ══ -->
+<div class="mo" id="mo-settings">
+  <div class="md">
+    <div class="md-title">⚙️ Settings</div>
+    <div class="settings-grid">
+      <div class="settings-row">
+        <div>
+          <div class="settings-label">UTC Offset (minutes)</div>
+          <div class="settings-sub">UTC+3 = 180 &nbsp;|&nbsp; UTC+0 = 0 &nbsp;|&nbsp; UTC-5 = -300</div>
+        </div>
+        <input class="fi" type="number" id="s-offset" style="width:90px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:16px" placeholder="180">
+      </div>
+      <div class="settings-row">
+        <div>
+          <div class="settings-label">Income Reset Preview</div>
+          <div class="settings-sub">Income resets every 4 h at these local times:</div>
+        </div>
+        <div id="s-preview" style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--gold);text-align:right;line-height:1.7"></div>
+      </div>
+    </div>
+    <div class="fa">
+      <button class="btn bg" onclick="closeModal('mo-settings')">Cancel</button>
+      <button class="btn bp" onclick="saveSettings()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ RESET MODAL ══ -->
+<div class="mo" id="mo-reset">
+  <div class="md" style="text-align:center">
+    <div style="font-size:38px;margin-bottom:12px">⚠️</div>
+    <div class="md-title" style="text-align:center">Reset War?</div>
+    <p style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:20px">
+      This deletes <strong style="color:var(--red)">all income logs & valor</strong> for the current war week.<br>Cannot be undone.
+    </p>
+    <div class="fa" style="justify-content:center">
+      <button class="btn bg" onclick="closeModal('mo-reset')">Cancel</button>
+      <button class="btn bd" onclick="doResetWar()">Yes, Reset</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+
+let incData=[],memData=[],vbData=[],vbSort='valor',timerInt;
+
+/* ─── TABS ─── */
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('page-'+t.dataset.pg).classList.add('active');
+    if(t.dataset.pg==='dashboard') loadDashboard();
+    if(t.dataset.pg==='income')    loadIncome();
+    if(t.dataset.pg==='members')   loadMembers();
+  });
+});
+
+/* ─── API ─── */
+async function api(p,m='GET'){
+  const url=API+(m==='GET'?'?'+new URLSearchParams(p):'');
+  const o=m==='GET'?{}:{method:'POST',body:new URLSearchParams(p)};
+  return (await fetch(url,o)).json();
+}
+
+/* ─── TOAST ─── */
+function toast(msg,e=false){
+  const el=document.createElement('div');
+  el.className='ti'+(e?' e':'');el.textContent=msg;
+  document.getElementById('toast').appendChild(el);
+  setTimeout(()=>{el.style.opacity='0';el.style.transition='opacity .3s';setTimeout(()=>el.remove(),300);},2600);
+}
+
+/* ─── TIMER ─── */
+function startTimer(ms){
+  clearInterval(timerInt);
+  timerInt=setInterval(()=>{
+    const d=ms-Date.now();
+    if(d<=0){clearInterval(timerInt);loadDashboard();loadIncome();return;}
+    const h=String(Math.floor(d/3600000)).padStart(2,'0');
+    const m=String(Math.floor((d%3600000)/60000)).padStart(2,'0');
+    const s=String(Math.floor((d%60000)/1000)).padStart(2,'0');
+    document.getElementById('cycle-timer').textContent=h+':'+m+':'+s;
+  },1000);
+}
+
+/* ─── UTILS ─── */
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function vc(v){v=parseInt(v)||0;if(v>=5000)return'var(--gold)';if(v>=1500)return'var(--teal)';if(v>0)return'#4dabf7';return'var(--muted)';}
+
+/* ─── DASHBOARD ─── */
+async function loadDashboard(){
+  const [dash,miss,vb]=await Promise.all([
+    api({action:'get_dashboard'}),
+    api({action:'get_missing_income'}),
+    api({action:'get_valor_board'})
+  ]);
+  document.getElementById('d-total').textContent=dash.total_members;
+  document.getElementById('d-coll').textContent=dash.collected;
+  document.getElementById('d-coll-sub').textContent='of '+dash.total_members+' members';
+  document.getElementById('d-miss').textContent=dash.missing;
+  document.getElementById('d-valor').textContent=Number(dash.total_valor).toLocaleString();
+  document.getElementById('d-week').textContent='Week '+dash.war_week;
+  document.getElementById('cycle-badge').textContent=dash.cycle_label;
+  startTimer(dash.next_reset);
+
+  // Missing list
+  const w=document.getElementById('miss-wrap');
+  if(!miss.length){
+    w.innerHTML='<div class="empty"><div class="ic">✅</div><p>Everyone collected this cycle!</p></div>';
+  }else{
+    w.innerHTML=`<table><thead><tr><th>Player</th><th>Player ID</th><th>Discord</th></tr></thead><tbody>
+      ${miss.map(m=>`<tr>
+        <td><div class="pname">${esc(m.player_name)}</div></td>
+        <td><div class="pid">${esc(m.player_id)}</div></td>
+        <td><div class="dtag">${m.discord_username?'🎮 '+esc(m.discord_username):'—'}</div></td>
+      </tr>`).join('')}</tbody></table>`;
+  }
+
+  // Valor board
+  vbData=vb.members||[];
+  renderVB();
+}
+
+function setSort(s){
+  vbSort=s;
+  document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('on'));
+  document.getElementById('sb-'+s).classList.add('on');
+  renderVB();
+}
+
+function renderVB(){
+  const q=(document.getElementById('vb-q')?.value||'').toLowerCase();
+  let rows=vbData.filter(m=>
+    m.player_name.toLowerCase().includes(q)||
+    (m.discord_username||'').toLowerCase().includes(q)
+  );
+  // unchecked first, then sort within group
+  rows.sort((a,b)=>{
+    const ca=parseInt(a.is_checked),cb=parseInt(b.is_checked);
+    if(ca!==cb)return ca-cb;
+    if(vbSort==='valor')return parseInt(b.total_valor)-parseInt(a.total_valor);
+    return a.player_name.localeCompare(b.player_name);
+  });
+  const mx=Math.max(...rows.map(r=>parseInt(r.total_valor)||0),1);
+  const tb=document.getElementById('vb-tbody');
+  if(!rows.length){tb.innerHTML='<tr><td colspan="5"><div class="empty"><p>No members</p></div></td></tr>';return;}
+  tb.innerHTML=rows.map((m,i)=>{
+    const ck=parseInt(m.is_checked),v=parseInt(m.total_valor)||0;
+    const pct=Math.round(v/mx*100);
+    return`<tr class="${ck?'done-row':''}">
+      <td style="color:var(--muted);font-size:11px;width:32px">${i+1}</td>
+      <td><div class="pname">${esc(m.player_name)}</div><div class="pid">${esc(m.player_id)}</div></td>
+      <td><div class="dtag">${m.discord_username?'🎮 '+esc(m.discord_username):'—'}</div></td>
+      <td>
+        <div class="vnum" style="color:${vc(v)}">${v.toLocaleString()}</div>
+        <div class="vbar-wrap"><div class="vbar" style="width:${pct}%"></div></div>
+      </td>
+      <td>
+        <button class="ck-btn${ck?' on':''}" onclick="toggleCheck(${m.id},this)" title="${ck?'Unmark':'Mark done'}"></button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function toggleCheck(id,btn){
+  btn.disabled=true;
+  const res=await api({action:'toggle_task_check',member_id:id},'POST');
+  const m=vbData.find(x=>x.id==id);
+  if(m)m.is_checked=res.checked?1:0;
+  renderVB();
+  toast(res.checked?'✓ Marked as done':'Unmarked');
+}
+
+/* ─── INCOME ─── */
+async function loadIncome(){
+  const d=await api({action:'get_income_status'});
+  incData=d.members||[];
+  document.getElementById('cycle-badge').textContent=d.cycle_label;
+  startTimer(d.next_reset);
+  renderIncome();
+}
+
+function renderIncome(){
+  const q=(document.getElementById('inc-q')?.value||'').toLowerCase();
+  const rows=incData.filter(m=>
+    m.player_name.toLowerCase().includes(q)||
+    m.player_id.toLowerCase().includes(q)||
+    (m.discord_username||'').toLowerCase().includes(q)
+  );
+  const tb=document.getElementById('inc-tbody');
+  if(!rows.length){tb.innerHTML='<tr><td colspan="6"><div class="empty"><p>No members</p></div></td></tr>';return;}
+  tb.innerHTML=rows.map(m=>{
+    const cv=parseInt(m.cycle_valor)||0;
+    const wv=parseInt(m.war_valor)||0;
+    const hasEntry=parseInt(m.cycle_entries)>0;
+    return`<tr>
+      <td><div class="pname">${esc(m.player_name)}</div></td>
+      <td><div class="pid">${esc(m.player_id)}</div></td>
+      <td><div class="dtag">${m.discord_username?'🎮 '+esc(m.discord_username):'—'}</div></td>
+      <td>
+        ${cv>0
+          ?`<span class="bdg g">+${cv.toLocaleString()} VP</span>`
+          :`<span class="bdg mu">0</span>`}
+      </td>
+      <td><span class="vnum" style="color:${vc(wv)}">${wv.toLocaleString()}</span></td>
+      <td style="display:flex;gap:6px;align-items:center">
+        <button class="add-btn" onclick="addIncome(${m.id},this)">+ Add</button>
+        ${hasEntry?`<button class="undo-btn" onclick="undoIncome(${m.id})">↩ Undo</button>`:''}
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function addIncome(mid,btn){
+  const amt=parseInt(document.getElementById('valor-amt').value);
+  if(!amt||amt<=0){toast('Enter a valor amount first!',true);document.getElementById('valor-amt').focus();return;}
+  btn.disabled=true;
+  const res=await api({action:'add_income',member_id:mid,amount:amt},'POST');
+  if(res.error){toast(res.error,true);btn.disabled=false;return;}
+  toast(`+${amt.toLocaleString()} VP added ✓`);
+  // Update local data optimistically
+  const m=incData.find(x=>x.id==mid);
+  if(m){m.cycle_valor=(parseInt(m.cycle_valor)||0)+amt;m.war_valor=(parseInt(m.war_valor)||0)+amt;m.cycle_entries=(parseInt(m.cycle_entries)||0)+1;}
+  renderIncome();
+}
+
+async function undoIncome(mid){
+  await api({action:'undo_income',member_id:mid},'POST');
+  toast('Last entry undone');
+  loadIncome();
+}
+
+/* ─── MEMBERS ─── */
+async function loadMembers(){
+  memData=await api({action:'get_members'});
+  renderMembers();
+}
+
+function renderMembers(){
+  const q=(document.getElementById('mem-q')?.value||'').toLowerCase();
+  const rows=memData.filter(m=>
+    m.player_name.toLowerCase().includes(q)||
+    m.player_id.toLowerCase().includes(q)||
+    (m.discord_username||'').toLowerCase().includes(q)
+  );
+  const tb=document.getElementById('mem-tbody');
+  if(!rows.length){tb.innerHTML='<tr><td colspan="7"><div class="empty"><div class="ic">🎮</div><p>No members — add some!</p></div></td></tr>';return;}
+  tb.innerHTML=rows.map((m,i)=>{
+    const tv=parseInt(m.total_valor)||0;
+    const mv=parseInt(m.manual_valor)||0;
+    return`<tr>
+      <td style="color:var(--muted);font-size:12px">${i+1}</td>
+      <td><div class="pname">${esc(m.player_name)}</div></td>
+      <td><div class="pid">${esc(m.player_id)}</div></td>
+      <td><div class="dtag">${m.discord_username?'🎮 '+esc(m.discord_username):'—'}</div></td>
+      <td><span class="vnum" style="color:${vc(tv)}">${tv.toLocaleString()}</span></td>
+      <td><span style="font-size:12px;color:${mv?'var(--teal)':'var(--muted)'}">${mv?'+'+mv.toLocaleString():'—'}</span></td>
+      <td>
+        <div style="display:flex;gap:5px">
+          <button class="btn bg btn-xs" onclick="openEditModal(${m.id},'${esc(m.player_name)}','${esc(m.player_id)}','${esc(m.discord_username||'')}')">✏️</button>
+          <button class="btn bt btn-xs" onclick="openValorModal(${m.id},'${esc(m.player_name)}',${mv})">⚡</button>
+          <button class="btn bd btn-xs" onclick="delMember(${m.id},'${esc(m.player_name)}')">🗑</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+/* ─── MEMBER MODAL ─── */
+function openAddModal(){
+  document.getElementById('mo-mem-title').textContent='Add Member';
+  document.getElementById('eid').value='';
+  ['fn','fp','fd'].forEach(id=>document.getElementById(id).value='');
+  openModal('mo-member');
+}
+function openEditModal(id,n,p,d){
+  document.getElementById('mo-mem-title').textContent='Edit Member';
+  document.getElementById('eid').value=id;
+  document.getElementById('fn').value=n;
+  document.getElementById('fp').value=p;
+  document.getElementById('fd').value=d;
+  openModal('mo-member');
+}
+async function saveMember(){
+  const id=document.getElementById('eid').value;
+  const n=document.getElementById('fn').value.trim();
+  const p=document.getElementById('fp').value.trim();
+  const d=document.getElementById('fd').value.trim();
+  if(!n||!p){toast('Name and Player ID required',true);return;}
+  const params={action:id?'update_member':'add_member',player_name:n,player_id:p,discord_username:d};
+  if(id)params.id=id;
+  const res=await api(params,'POST');
+  if(res.error){toast(res.error,true);return;}
+  closeModal('mo-member');
+  toast(id?'Member updated ✓':'Member added ✓');
+  loadMembers();
+}
+async function delMember(id,name){
+  if(!confirm(`Remove ${name}?`))return;
+  await api({action:'delete_member',id},'POST');
+  toast(`${name} removed`);
+  loadMembers();
+}
+
+/* ─── VALOR MODAL ─── */
+function openValorModal(id,name,cur){
+  document.getElementById('ve-id').value=id;
+  document.getElementById('ve-name').textContent=name;
+  document.getElementById('ve-val').value=cur||0;
+  openModal('mo-valor');
+}
+async function saveValor(){
+  const id=document.getElementById('ve-id').value;
+  const v=parseInt(document.getElementById('ve-val').value)||0;
+  await api({action:'set_member_manual_valor',id,valor:v},'POST');
+  closeModal('mo-valor');
+  toast('Valor updated ✓');
+  loadMembers();
+}
+
+/* ─── SETTINGS ─── */
+async function loadSettings(){
+  const s=await api({action:'get_settings'});
+  const off=parseInt(s.utc_offset_minutes??180);
+  document.getElementById('s-offset').value=off;
+  updateResetPreview(off);
+}
+function updateResetPreview(off){
+  // Reset times: 4h cycles aligned to UTC offset
+  // cycle boundary when (utc + off*60) is divisible by 14400
+  // = local midnight + 0,4,8,12,16,20h
+  const times=[];
+  for(let h=0;h<24;h+=4)times.push(((h)%24+'').padStart(2,'0')+':00');
+  // shift by offset
+  const offsetH=(parseInt(off)||0)/60;
+  const shifted=times.map(t=>{
+    let [hh]=t.split(':').map(Number);
+    // The actual local reset = UTC boundary + offset
+    // UTC boundary hours = 0,4,8,12,16,20
+    // local = UTC + offsetH
+    const local=(hh+offsetH+24)%24;
+    const h=Math.floor(local),m=Math.round((local-h)*60);
+    const ampm=h<12?'AM':'PM';
+    const hh12=h%12||12;
+    return `${hh12}:${m.toString().padStart(2,'0')} ${ampm}`;
+  });
+  document.getElementById('s-preview').innerHTML=shifted.join(' &nbsp;·&nbsp; ');
+}
+document.getElementById('s-offset')?.addEventListener('input',function(){updateResetPreview(parseInt(this.value)||0);});
+async function saveSettings(){
+  const off=parseInt(document.getElementById('s-offset').value)||180;
+  await api({action:'save_settings',utc_offset_minutes:off},'POST');
+  closeModal('mo-settings');
+  toast('Settings saved ✓ — refresh to apply timer');
+  setTimeout(()=>loadDashboard(),500);
+}
+
+/* ─── RESET WAR ─── */
+async function doResetWar(){
+  await api({action:'reset_war'},'POST');
+  closeModal('mo-reset');
+  toast('⚔️ War reset! Fresh start.');
+  loadDashboard();loadMembers();
+}
+
+/* ─── MODAL HELPERS ─── */
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.mo').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
+
+/* ─── INIT ─── */
+loadDashboard();
+loadSettings();
+</script>
+<script type="module" src="app.js"></script>
+</body>
+</html>
